@@ -1,0 +1,6 @@
+Laravel 6 non ha il frontend, installarlo con
+    composer require laravel/ui:^1.0 --dev
+
+e poi le auth con
+    php artisan ui bootstrap --auth
+e modificherà i file bootstra.js in resources > js ed app.scss in resources > scss

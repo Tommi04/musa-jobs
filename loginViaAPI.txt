@@ -1,0 +1,25 @@
+passport, sanctum package di laravel
+
+tymon jwt laravel, package esterno a laravel, ma è meglio usarlo solo per i programmi API, non WEB ed API
+
+
+INSTALLIAMO passport
+composer require laravel/passport  ... (con eventuale versione "9.2.0" da passare dopo)
+php artisan migrate
+php artisan passport:install
+    vengono creati due client con un pezzo di token ciascuno
+andiamo nel controller (presumibilmente user) e dove abbiamo "use Notifiable, SoftDeletes" insieriamo HasApiTokens
+dentro App\Providers\AppServiceProvider.php, nel boot() inserire Passport::routes(); 
+    questo creerà tutte le rotte di passport, se non servono inserire a mano solo quelle che servono
+dentro config>auth.php nella parte delle Authentication Guards sostituire quelle presenti con
+    'guards' => [
+        'web' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        'api' => [
+            'driver' => 'passport',
+            'provider' => 'users',
+        ],
+    ],
