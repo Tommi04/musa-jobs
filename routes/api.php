@@ -49,6 +49,16 @@ Route::group(['middleware' => 'api'], function(){
     
 });
 
+
+Route::group(['middleware' => 'api'], function(){
+    Route::post('register-user', 'AuthController@registerUser' );
+    Route::post('user-login', 'AuthController@userLogin');
+});
+
+Route::group(['middleware' => 'auth:api'], function(){
+    Route::get('my-profile', 'AuthController@myProfile');
+});
+
 // Quando creiamo la rotta, laravel ci aggiunge un pezzo all'url dell'api
 // dovremo richiamarla non con per esempio /users ses abbiamo dato users alla rotta dell'api
 // ma dovremo richiamarla con /api/users

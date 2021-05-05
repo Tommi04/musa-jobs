@@ -3,7 +3,7 @@
 //ho messo user dentro Models. Devo andare in config > auth.php a modificare dove cerca User
 namespace App\Models;
 
-use Laravel\passport\HasApiTokens;
+use Laravel\Passport\HasApiTokens;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -26,6 +26,7 @@ class User extends Authenticatable
         'username',
         'privacy',
         'role_id',
+        'city'
     ];
 
     /**
