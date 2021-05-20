@@ -3,14 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UsersBySkillRequest;
+use App\Http\Requests\UserSkillDeletionRequest;
+use App\Http\Requests\UserSkillManagementRequest;
 use App\Models\User;
 use App\Models\UserDetails;
+use App\Traits\ApiTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use PhpParser\Node\Stmt\TryCatch;
 use PHPUnit\Util\Json;
 
 class UsersController extends Controller
 {
+    use ApiTrait;
     /**
      * Display a listing of the resource.
      *
@@ -170,6 +176,62 @@ class UsersController extends Controller
             return response()->json(
                 [ 'error' => true, 'message' => 'Errore ripristino utente', 'code' => JsonResponse::HTTP_INTERNAL_SERVER_ERROR],
                 JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function addSkill(UserSkillManagementRequest $request){
+        // dd($request->all());    
+        // Auh::User(); //torna lo user loggato
+        // Auth::id(); //torna l'id dell'utente loggato
+
+        //scope byType che torna solo 'user'
+        $user = User::byTyep('user')
+                    //fai il with con details che a sua volta lo fa con skills
+                    ->with('details.skills')
+                    //findOrFail trova o fallisce la query
+                    ->findOrFail(Auth::id());
+        
+        $extras = [
+            'level'             => $request->lvl,
+            'experience_year'   => $request->exp_years,
+        ];
+
+        try {
+            // $result = $user->details->skills()->attach($request->skill_id, $extras);
+
+            // $result = $user->details->skills()->sync([$request->skill_id => $extras], false);
+            //uguali
+            //sta facendo l'update, evitiamo di gestire attach o detach, se ha già la skill farà da solo update
+            $result = $user->details->skills()->syncWithoutDetaching([$request->skill_id => $extras]);
+            
+            if(count($result['attached']) > 0){
+                return $this->successResponse('Skill aggiunta con successo', JsonResponse::HTTP_CREATED);
+            }else if (count($result['update']) > 0){
+                return $this->successResponse('Skill aggiornata con successo', JsonResponse::HTTP_OK);
+            }else{
+                return $this->successResponse('Nessuna skill coninvolta', JsonResponse::HTTP_OK);
+            }
+        } catch (\Exception $e) {
+            return $this->errorResponse('Errore nel salvataggio skill utante', JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+            // $result = $e->getMessage();
+        }
+        dd($result);
+    }
+
+    public function removeSkill(UserSkillDeletionRequest $request){
+        $user = User::byType('user')
+                    ->with('details.skills')
+                    ->findOrFail(Auth::all());
+
+        //al detach va passato un array
+        $result = $user->details->skills()->detach($request->skill_id);
+        dd($result);
+
+        // === 1 perchè rimuoviamo una sola skill
+        if ($result === 1 ){
+            return $this->successResponse('Skill rimossa con successo', JsonResponse::HTTP_OK);
+        }else{
+            return $this->errorResponse('Errore rimozione skill', JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 }

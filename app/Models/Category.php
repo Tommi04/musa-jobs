@@ -21,4 +21,8 @@ class Category extends Model
         //una categoria è un hasMany rispetto ad una company
         return $this->hasMany('App\Models\CompanyDetails', 'category_id', 'id');
     }
+
+    public function scopeOrdered($query){
+        return $query->orderBy('label', 'ASC');
+    }
 }

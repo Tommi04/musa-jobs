@@ -21,9 +21,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 */
 
-//gli passiamo un middleware con solo api (successivamente, quando implementeremo tutto, la sintassi sarà auth:api)
-//con solo api la lista degli utenti sarà esposta pubblicamente. Al momento le esponiamo pubbliche
-//perchè non abbiamo tocken
+//qua serve auth:api perchè ci serve anche l'autenticazione dell'utente loggato
 Route::group(['middleware' => 'api'], function(){
     Route::get('users', 'UsersController@index');
     Route::get('users/{user}', 'UsersController@show');
@@ -46,17 +44,26 @@ Route::group(['middleware' => 'api'], function(){
     // Route::get('job-offers-by-skill/{skill}', 'JobOffersController@jobOffersBySkill');
     //trasformiamola in post
     Route::post('job-offers-by-skill', 'JobOffersController@jobOffersBySkill');
+
+    //da implementare
+    // Route::post('company-categories', 'CompaniesController@allCategories');
+    
+    Route::get('my-profile', 'AuthController@myProfile');
+    
+    Route::post('logout', 'AuthController@logout');
+
+    Route::post('user-skill-add', 'UsersController@addSkill');
+    Route::post('user-skill-remove', 'UsersController@removeSkill');
     
 });
 
 
-Route::group(['middleware' => 'api'], function(){
+//auth:api significa che ha il doppio middleware per le richieste api e per il token di autenticazione, il login
+//api ha solo il middleware delle api
+Route::group(['middleware' => ['api']], function(){
     Route::post('register-user', 'AuthController@registerUser' );
     Route::post('user-login', 'AuthController@userLogin');
-});
-
-Route::group(['middleware' => 'auth:api'], function(){
-    Route::get('my-profile', 'AuthController@myProfile');
+    Route::get('company-categories', 'CompaniesController@allCategories');
 });
 
 // Quando creiamo la rotta, laravel ci aggiunge un pezzo all'url dell'api

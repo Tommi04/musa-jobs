@@ -10,11 +10,13 @@ use Illuminate\Support\Facades\Validator;
 
 use App\Models\User;
 use App\Models\UserDetails;
+use App\Traits\ApiTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
+    use ApiTrait;
     /**
      * Create a new controller instance.
      *
@@ -42,6 +44,7 @@ class AuthController extends Controller
 
         if($validator->fails()){
             return response()->json(['error' => true, 'message' => $validator->errors(), 'status' => JsonResponse::HTTP_UNPROCESSABLE_ENTITY], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+            return $this->errorResponse($validator->errors(), JsonResponse::HTTP_UNPROCESSABLE_ENTITY)
         }
         */
 
@@ -74,17 +77,19 @@ class AuthController extends Controller
             //associamo dettagli e utente
             $user->details()->associate($user_details);
 
-            return response()->json(['result' => $user, 'code' => JsonResponse::HTTP_CREATED], JsonResponse::HTTP_CREATED);
-
+            // return response()->json(['result' => $user, 'code' => JsonResponse::HTTP_CREATED], JsonResponse::HTTP_CREATED);
+            return $this->successResponse($user, JsonResponse::HTTP_CREATED);
+            
             DB::commit();
-
+            
         }catch(\Exception $e){
             DB::rollBack();
-            return response()->json(
+            return $this->errorResponse('Errore nello stabilire la connessione al DB. Riprovare più tardi o ricontattare l\'amministratore', JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            /*return response()->json(
                     [
                         'error' => true, 
                         'message' => 'Errore nello stabilire la connessione al DB. Riprovare più tardi o ricontattare l\'amministratore', 'code' => JsonResponse::HTTP_INTERNAL_SERVER_ERROR
-                    ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+                    ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR); */
         }
     }
 
@@ -99,13 +104,14 @@ class AuthController extends Controller
         );
 
         if ($validator->fails()){
-            return response()->json(
+            return $this->errorResponse($validator->errors(), JsonResponse::HTTP_BAD_REQUEST);
+            /*return response()->json(
                 [
                     'error' => true, 'message' => $validator->errors(), 
                     'status' => JsonResponse::HTTP_BAD_REQUEST
                 ], 
                 JsonResponse::HTTP_BAD_REQUEST
-            );
+            );*/
         }
 
         if (Auth::attempt(['email' => request('email'), 'password' => request('password'), 'role_id' => 2 ])){
@@ -116,12 +122,18 @@ class AuthController extends Controller
                 'token'     => $user->createToken('token')->accessToken,
                 'userData'  => ''
             ];
-            return response()->json(['resulte' => $result, 'code' => JsonResponse::HTTP_OK], JsonResponse::HTTP_OK);
+
+            //potremmo anche mandare un evento al listener AppServiceProvider per registrare l'utente
+            // event('UserRegisterd');
+
+            // return response()->json(['result' => $result, 'code' => JsonResponse::HTTP_OK], JsonResponse::HTTP_OK);
+            return $this->successResponse($result, JsonResponse::HTTP_OK);
             //tutto ciò creerà un token da passare poi ogni richiesta fatta
-
-
+            
+            
         }else{
-            return response()->json(['error' => true, 'message' => 'Login non valido', 'code', JsonResponse::HTTP_UNAUTHORIZED], JsonResponse::HTTP_UNAUTHORIZED);
+            return $this->errorResponse('Login non valido', JsonResponse::HTTP_UNAUTHORIZED);
+            // return response()->json(['error' => true, 'message' => 'Login non valido', 'code', JsonResponse::HTTP_UNAUTHORIZED], JsonResponse::HTTP_UNAUTHORIZED);
         }
 
     }
@@ -134,8 +146,44 @@ class AuthController extends Controller
 
     }
 
-    public function logout(){
+    public function logout(Request $request){
+        // dd($request->user()); //fa da solo il decode del token
+        // dd($request->user()->token()); //restituisce la riga del db con il token associato
+        // dd($request->user()->token()->revoke()); //revochiamo il token
+        //revochiamo il token ma non viene cancellato
+        /* $revoked = $request->user()->token()->revoke();
+        if ($revoked) {
+            return response()->json(['result' => 'Utente sloggato con successo', 'code' => JsonResponse::HTTP_OK], JsonResponse::HTTP_OK);
+        }else{
+            return response()->json(['result' => 'Errore in logout', 'code' => JsonResponse::HTTP_UNPROCESSABLE_ENTITY], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+        */
 
+        //cancelliamo il token
+        //dichiaro una variabile di controllo che parte da 0
+        $revoked_token_counter = 0;
+        //prendiamo la proprietà array token e scorre ogni token all'interno dell'array con il metodo each()
+        //passiamo la proprietà dentro al control con use ma anteponiamo al nome della variabile la "&"
+        //questo significa che io non sto passando esattamente la variabile ma l'allocazione di memoria fisica di quella variabile, una referenza un puntatore alla variabile
+        $request->user()->token->each(function($token, $key) use(&$revoked_token_counter){
+            //qua andiamo a cancellare il token
+            //se il delete() è andato a buon fine torna true, altrimenti torna false
+            $deleted = $token->delete();
+            if ($deleted){
+                //user $revoked_token_counter come una variabile normale e non come un contatore, si fa uno scope locale
+                //il +1 lo fa però sull'allocazione di memoria che gli abbiamo passato in use
+                $revoked_token_counter++;
+            }
+        });
+        dd($revoked_token_counter);
+        
+        if ($revoked_token_counter) {
+            return $this->successResponse('Utente sloggato con successo', JsonResponse::HTTP_OK);
+            // return response()->json(['result' => 'Utente sloggato con successo', 'code' => JsonResponse::HTTP_OK], JsonResponse::HTTP_OK);
+        }else{
+            return $this->errorResponse('Errore in logout', JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+            // return response()->json(['result' => 'Errore in logout', 'code' => JsonResponse::HTTP_UNPROCESSABLE_ENTITY], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
     }
 
     public function myProfile(){
@@ -145,7 +193,8 @@ class AuthController extends Controller
         $result = [
             'userData'  => $user,
         ];
-        return response()->json(['resulte' => $result, 'code' => JsonResponse::HTTP_OK], JsonResponse::HTTP_OK);
+        return $this->successResponse($result, JsonResponse::HTTP_OK);
+        // return response()->json(['resulte' => $result, 'code' => JsonResponse::HTTP_OK], JsonResponse::HTTP_OK);
 
     }
 }

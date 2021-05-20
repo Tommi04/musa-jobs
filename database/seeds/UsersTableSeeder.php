@@ -87,7 +87,7 @@ class UsersTableSeeder extends Seeder
 
                 $first_name = $faker->firstName;
                 $last_name = $faker->lastName;
-                $username = strtolower(str_replace(' ', '.', $first_name)) . '.' . strtolower(str_replace(' ', '.', $last_name)) . '@' . $faker->freeEmailDomain;
+                $username = strtolower(str_replace(' ', '.', $first_name)) . '.' . strtolower(str_replace(' ', '.', $last_name));
                 $email = $username . '@' . $faker->freeEmailDomain;
 
                 $user_data= [

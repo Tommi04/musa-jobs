@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Passport\Passport;
 
 class User extends Authenticatable
 {
@@ -140,6 +141,12 @@ class User extends Authenticatable
 
     protected static function boot(){
         parent::boot();
+        
+        // dd('sono qua');
+
+        // Passport::routes();
+
+        // Passport::personalAccessClientId('1');
 
         //usiamo un hook
         static::deleting(function($model){
