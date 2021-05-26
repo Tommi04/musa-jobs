@@ -1,0 +1,18 @@
+i console command servono per le più svariate cose, sono dei comandi personalizzati per creare routine
+
+    php artisan make:command NomeComando
+
+e ce lo troviamo dentro app>Console>Commands
+
+Dentro Laravel ci mette a disposizione le properties signature e description 
+    e le funzioni construct e handle
+
+La signature è il nome del comando da console
+
+dopo di che se lanciamo php artisan ce lo troviamo come command
+
+se non funziona il comando dobbiamo registrare la classe nel Kernel.php nella property $commands
+
+per passare degli argomenti al comando dobbiamo specificare nella signature dopo il nome del comando
+    {nomeComendo}
+    e riprenderlo in handle() o come arguments() che però li prende tutti o come arguments(['nomeComando'])

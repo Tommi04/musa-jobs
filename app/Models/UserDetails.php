@@ -15,7 +15,8 @@ class UserDetails extends Model
         'birth_date',
         'phone',
         'gender',
-        'city'
+        'city',
+        'logo'
     ];
     public function user(){
         //per specificare noi i nome delle colonne della tabella, altrimenti nella migration

@@ -17,6 +17,18 @@ class Company extends Model
         'category_id',
     ];
 
+    //questo per far appendere alla risposta API l'accessor qua sotto
+    protected $appends = [
+        'company_logo_full_url'
+    ];
+
+    //questo è un accessor, get all'inizio e Attribute alla fine sono fondamentali
+    public function getCompanyLogoFullUrlAttribute(){
+        //APP_URL sta nell'ENV
+        //gli stiamo tornando la path del logo, che non andrà in risposta all'API a meno di non fare l'append tramite $appends
+        return $this->logo !== '' ? env('APP_URL') . '/storage/' . $this->logo : null;
+    }
+
     public function user(){
         return $this->morphOne('App\Models\User', 'details');
     }

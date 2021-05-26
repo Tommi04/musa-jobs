@@ -20,6 +20,7 @@ class CreateUsersDetailTable extends Migration
             $table->string('phone')->nullable()->default(null);
             $table->string('gender')->nullable()->default(null);
             $table->string('city');
+            $table->text('logo');
             //avendo creato la relazione polimorfa e messo l'id dei details nella tabella User non ho più bisogno di questa
             // $table->bigInteger('user_id')->unsigned();
             $table->timestamps();

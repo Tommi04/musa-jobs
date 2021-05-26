@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CompanyLogoRequest;
 use App\Models\Category;
 use App\Models\Company;
 use App\Traits\ApiTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CompaniesController extends Controller
 {
@@ -58,6 +61,42 @@ class CompaniesController extends Controller
     public function update(Request $request, $id)
     {
         //
+    }
+
+    public function uploadLogo(CompanyLogoRequest $request){
+        $user = Auth::user();
+        $user->load('details');
+
+        if( $user->hasRole('company')){
+            try {                
+                //ho creat una variabile $company che è uguale a quello che c'è dentro detail di user
+                $company = $user->details;
+                
+                if ($company && $request->hasFile('logo')){
+                    DB::beginTransaction();
+
+                    $file = $request->file('logo');
+                    $filename = time() . '.' . $file->getClientOriginalExtension();
+
+                    $file_path = 'companies/' . $company->id . '/logo';
+
+                    $uploaded_file = $file->storeAs($file_path, $filename, 'public');
+
+                    $company->logo = $uploaded_file;
+
+                    $company->save();
+                    
+                    DB::commit();
+
+                    return $this->successResponse(['message' => 'Logo ok.'], JsonResponse::HTTP_CREATED);
+                }
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return $this->errorResponse('Errore caricamento logo azienda.', JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+            }
+        }else{
+            return $this->errorResponse('Errore caricamento logo azienda.', JsonResponse::HTTP_FORBIDDEN);
+        }
     }
 
     /**

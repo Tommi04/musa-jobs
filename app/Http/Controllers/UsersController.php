@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UserLogoRequest;
 use App\Http\Requests\UsersBySkillRequest;
 use App\Http\Requests\UserSkillDeletionRequest;
 use App\Http\Requests\UserSkillManagementRequest;
@@ -11,6 +12,7 @@ use App\Traits\ApiTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use PhpParser\Node\Stmt\TryCatch;
 use PHPUnit\Util\Json;
 
@@ -140,6 +142,39 @@ class UsersController extends Controller
     public function update(Request $request, $id)
     {
         //
+    }
+
+    public function uploadLogo(UserLogoRequest $request){
+        $user = Auth::user();
+        $user->load('details');
+
+        if($user->hasRole('user')){
+            try {
+                $user_details = $user->details;
+
+                if($user_details && $request->hasFile('logo')){   
+                    DB::beginTransaction();
+
+                    $file = $request->file('logo');
+                    $filename = time() . '.' . $file->getClientOriginalExtension();
+                    $file_path = 'users/' . $user_details->id . '/logo';
+
+                    $uploaded_file = $file->storeAs($file_path, $filename, 'public');
+
+                    $user_details->logo = $uploaded_file;
+
+                    $user_details->save();
+
+                    DB::commit();
+
+                    return $this->successResponse(['message' => 'Logo ok.'], JsonResponse::HTTP_CREATED);
+                }
+            } catch (\Exception $e) {
+                return $this->errorResponse('Errore caricamento logo utente', JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
+            }
+        }else{
+            return $this->errorResponse('Errore caricamento logo utente', JsonResponse::HTTP_FORBIDDEN);
+        }
     }
 
     /**

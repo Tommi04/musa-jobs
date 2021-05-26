@@ -110,7 +110,8 @@ class UsersTableSeeder extends Seeder
                     'birth_date'    => null,
                     'phone'         => null,
                     'gender'        => null,
-                    'city'          => $faker->city()
+                    'city'          => $faker->city(),
+                    'logo'          => ''
                 ];
 
                 $user_details = UserDetails::create($user_details_data);

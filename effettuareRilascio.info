@@ -1,0 +1,179 @@
+*************************************************************
+ALLA FINE TROVIAMO LA PARTE CHE RIGUARDA GIT
+*************************************************************
+
+Se il nostro sito è in vanilla php o drupal o jumla o wordpress, per mandare online il sito ci basta un hosting linux con un db mysql o mariaDb
+
+Hosting più famosi:
+    Aruba, Registry, vHosting, Amazon.
+
+    Aruba assistenza pessima. Nell'hosting linux base non ci da la possibilità di usare git nè di entrare da terminale
+    vHosting buono, ma lo spazio che acquistiamo non è estendibile
+
+per portare tutto su hosting abbiamo bisogno di un client ftp come fileZilla.
+Dobbiamo configurare il sito in base alle configurazioni dell'hosting. 
+Le interfacce grafiche più famose per gestire l'hosting sono plesk e seepanel
+
+Prima di pubblicare lo zip che facciamo con i programmi per il sito, dobbiamo rimuovere la cartella vendor e .git
+
+Con Plesk:
+Facciamo "carica" e carichiamo lo zip e fa tutto lui.
+Altrimenti tramite fileZilla ci carichiamo lo zip direttamente sul sito
+Poi andiamo da pannello e facciamo "estrai file"
+
+se trasciniamo file tramite ftp con fileZilla ci impieghiamo tantissimo tempo perchè l'ftp carica un file alla volta, 
+    apre e chiude una connessione per ogni file
+L'ftp è una cosa superata, evitiamo che è meglio
+
+Poi da plank gli dobbiamo dire che deve estrarre i file
+
+Abbiamo caricato i file online.
+
+Dobbiamo loggarci al server nel sito tramite linea di comando. Per Windows dobbiamo scaricare putty. Per Apple tramite ssh.
+Con SSH dobbiamo fare
+    ssh username@ip
+    password
+
+Installiamo composer dentro la macchina, ma non globale perchè non siamo amministratori perchè il server è in affitto.
+da getcomposer.org
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    php -r "if (hash_file('sha384', 'composer-setup.php') === '756890a4488ce9024fc62c56153228907f1545c228516cbf63f885e036d37e9a59d27d63f46af1d4d07ee0f76181c7d3') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+    php composer-setup.php
+    php -r "unlink('composer-setup.php');"
+
+non avendo composer globale dobbiamo chiamarlo con 
+    php composer.phar
+
+    e lanciamo
+
+    php composer.phar install
+
+Pagina web:
+Se andiamo nel link del sito nell'hosting non troveremo il sito perchè dobbiamo andare in /public per vedere il sito.
+Però andrà in internal server error o perchè non abbiamo il file .env o perchè la cartella bootstrap deve avere i permessi di scrittura e lettura e tutto quanto
+Per dare i permessi alla cartella bootstrap, tramite fileZilla andiamo di tasto destro>Permessi file> mettiamo 777 ovunque
+Via console il comando è 
+    chmod -R 777 bootstrap/
+
+comandi base unix
+ls      : mostra file
+ls -la  : mostra file nascosti
+rm -rf  : rimuoviamo file -ricorsivo -forza
+pwd     : per vedere la cartella dove siamo
+touch   : per creare file
+nano    : visualizza un file o lo crea se non lo trova
+
+Per creare il nuovo .env tramite .env.example facciamo
+    cp .env.example .env
+
+Per modificare file tramite linea di comando possiamo usare vi ma fa schifo oppure nano
+    nano .env
+di base dobbiamo mettere APP_NAME, APP_URL, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+    ctrl+x per uscire da nano
+
+Laravel a questo punto dovrebbe partire. Darà un errore del tipo "No application enctyption key has been specified."
+Allora da console dobbiamo dare
+    php artisan generate
+
+e abbiamo installato laravel
+
+verifichiamo di avere il database, ma tanto già dovevamo averlo per il test
+poi lanciamo
+    php artisan migrate --seed per verificare che funziona il db
+se da qualche errore verifichiamo username e password in .env
+poi possiamo provare con postman come nel test
+Troveremo un errore che dice che il personal client non è creato, quindi se usiamo passport lanciamo
+    php artisan passport:install
+
+troveremo però un /public nel link del sito online, laravel mette come entrypoint l'index dentro /public.
+Dentro il file server.php nella root troviamo il riferimento
+
+per togliere /public molti dicono di cambiare server.php in index.php e prendere il file .htaccess nella cartella public e spostalo nella root
+PERO' NON E' DA FARE!
+Dobbiamo all'interno della root creare un nuovo file .htaccess, da console il comando è 
+    touch .htaccess
+oppure
+    nano .htaccess
+A questo punto dobbiamo scrivere nel file
+    <IfModule mod_rewrite.c>
+        RewriteEngine on
+        RewriteCond %{REQUEST_URI} !^public/
+        RewriteRule ^(.*)$ public/$1 [L] #relative substitution
+    </IfModule>
+e salvarlo. Per consentire al server di eseguire questo comando serve un server linux che abbia il pacchetto mod_rewrite attivo o attivabile, tutti ce l'hanno in teoria
+
+Per togliere la barra di debugbar (se l'abbiamo) che vediamo sotto al sito andiamo a cambiare il file .env mettendo
+    APP_ENV=production //altra opzione è staging
+    APP_DEBUG=false  //di solito prima di mettere online il sito è a true
+poi
+    php composer.phar dumpautoload
+se no funziona
+    php artisan config cache
+e riprovare finchè non funziona
+
+
+**********************************************************************************************************************
+USARE GIT PER METTERE ONLINE IL SITO
+
+Se dobbiamo mettere online il sito via ftp ogni volta ci muoriamo scemi a ricordarci tutti i file che abbiamo cambiato da uplodare.
+Ovviamente via ftp i file si sovrascrivono e non c'è sincronia
+
+Andare in git e aprire il repository
+Andare in console e testare se funziona il comando
+    git
+altrimenti installarlo
+
+lanciare dentro la cartella del sito
+    git init
+poi
+    git remote add origin UrlHttpsDalRepositoryGit
+poi per avere l'elenco delle origin e su quale url
+    git remote -v
+poi
+    git remote show origin
+per recuperare ciò che abbiamo nel repository a cui siamo collegati facciamo
+    git fetch origin dev //git aggiungi un link remoto, chiamalo origin, che corrisponde all'url dev (che sarebbe il nome del branch origin)
+se facciamo
+    ls
+è ancora vuoto, perchè con git fetch lui sta recependo quello che c'è online
+con 
+    git pull origin dev
+tiriamo giù dal repository le cose
+    ls
+vediamo i file
+
+Però con git non abbiamo il .env, solo il .env.example, non c'è vendor perchè nei repository non si mette, non c'è composer che è da installare a parte
+Installiamo composer con
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    php -r "if (hash_file('sha384', 'composer-setup.php') === '756890a4488ce9024fc62c56153228907f1545c228516cbf63f885e036d37e9a59d27d63f46af1d4d07ee0f76181c7d3') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+    php composer-setup.php
+    php -r "unlink('composer-setup.php');"
+
+Dopo di che facciamo
+    composer.phar install
+poi
+    cp .env.example .env
+o
+    mv .env.example .env
+che fa la move di un file in un altro e lo cancella
+poi facciamo 
+    nano .env e configuriamo il file 
+di base dobbiamo mettere APP_NAME, APP_URL, DB_DATABASE, DB_USERNAME, DB_PASSWORD, APP_DEBUG a false, APP_ENV a production
+creamo i client passport
+    php artisan passport:install
+poi generiamo le key
+    php artisan key:generate
+poi cambiamo il public
+    nano .htaccess
+e ci copiamo
+    <IfModule mod_rewrite.c>
+        RewriteEngine on
+        RewriteCond %{REQUEST_URI} !^public/
+        RewriteRule ^(.*)$ public/$1 [L] #relative substitution
+    </IfModule>
+e salvarlo. Per consentire al server di eseguire questo comando serve un server linux che abbia il pacchetto mod_rewrite attivo o attivabile, tutti ce l'hanno in teoria
+
+Poi tutto funzionerà in laravel.
+Non troveremo tutto ciò che non sta su git ovviamente, quindi dobbiamo committare la roba su git e poi riscaricare dal sito con
+    git pull origin dev
+e ci dirà che sono stati scaricati i file che sono modificati   

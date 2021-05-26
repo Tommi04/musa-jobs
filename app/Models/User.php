@@ -51,6 +51,18 @@ class User extends Authenticatable
     //array in autojoin, sconsigliata perchè magari non ne abbiamo bisogno sempre
     // protected $with = ['details'];
 
+    //questo per far appendere alla risposta API l'accessor qua sotto
+    protected $appends = [
+        'user_logo_full_url'
+    ];
+
+    //questo è un accessor, get all'inizio e Attribute alla fine sono fondamentali
+    public function getUserLogoFullUrlAttribute(){
+        //APP_URL sta nell'ENV
+        //gli stiamo tornando la path del logo, che non andrà in risposta all'API a meno di non fare l'append tramite $appends
+        return $this->logo !== '' ? env('APP_URL') . '/storage/' . $this->logo : null;
+    }
+
     public function getFullnameAttribute(){
         return $this->first_name . ' ' . $this->last_name;
     }
@@ -151,8 +163,10 @@ class User extends Authenticatable
         //usiamo un hook
         static::deleting(function($model){
             if($model->details_type === 'App\Models\UserDetails'){
-                //vado a cancellare con la relazione polimorfa
-                $model->details->jobOffers()->detach();
+                if($model->details){
+                    //vado a cancellare con la relazione polimorfa
+                    $model->details->jobOffers()->detach();
+                }
                 $model->details()->delete();
             }else if($model->details_type === 'App\Models\Company'){
                 //vado a cancellare con la relazione polimorfa

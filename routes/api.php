@@ -22,7 +22,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 */
 
 //qua serve auth:api perchè ci serve anche l'autenticazione dell'utente loggato
-Route::group(['middleware' => 'api'], function(){
+Route::group(['middleware' => 'auth:api'], function(){
     Route::get('users', 'UsersController@index');
     Route::get('users/{user}', 'UsersController@show');
     
@@ -54,6 +54,10 @@ Route::group(['middleware' => 'api'], function(){
 
     Route::post('user-skill-add', 'UsersController@addSkill');
     Route::post('user-skill-remove', 'UsersController@removeSkill');
+
+    //verificare se put o patch funzionano per i files
+    Route::post('upload-company-logo', 'CompaniesController@uploadLogo');
+    Route::post('upload-user-photo', 'UsersController@uploadLogo');
     
 });
 
@@ -62,7 +66,9 @@ Route::group(['middleware' => 'api'], function(){
 //api ha solo il middleware delle api
 Route::group(['middleware' => ['api']], function(){
     Route::post('register-user', 'AuthController@registerUser' );
+    Route::post('register-login', 'AuthController@registerCompany');
     Route::post('user-login', 'AuthController@userLogin');
+    Route::post('company-login', 'AuthController@companyLogin');
     Route::get('company-categories', 'CompaniesController@allCategories');
 });
 

@@ -11,7 +11,7 @@ trait ApiTrait{
     }
 
     private function errorResponse($errors, $code){
-        return response()->json(['error' => true, 'message' => $errors, 'code' => $code ]);
+        return response()->json(['error' => true, 'message' => $errors, 'code' => $code ], $code);
     }
 }
 
